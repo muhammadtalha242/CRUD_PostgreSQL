@@ -1,4 +1,4 @@
-﻿using CRUD_PostgreSQL.Models;
+﻿using CRUD_PostgreSQL.Services.SuperHeroServices;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,14 +8,19 @@ namespace CRUD_PostgreSQL.Controllers
     [ApiController]
     public class SuperHeroController : ControllerBase
     {
-        private static List<SuperHero> SuperHeros = new List<SuperHero> { new SuperHero { Id = 1, Name = "Spide Man", FirstName = "Peter", LastName = "Paker", Place = "New York" },
-        new SuperHero { Id = 2, Name = "Spide Man1", FirstName = "Peter", LastName = "Paker", Place = "New York" },
-        new SuperHero { Id = 3, Name = "Spide Man2", FirstName = "Peter", LastName = "Paker", Place = "New York" }};
+        private readonly ISuperHeroService _SuperHeroService;
+
+        public SuperHeroController(ISuperHeroService superHeroService) 
+        {
+            _SuperHeroService = superHeroService;
+        }
 
         [HttpGet]
         public async Task<ActionResult<List<SuperHero>>> GetSuperHeros()
         {
-            return Ok(SuperHeros);
+            var superHeros = await _SuperHeroService.GetSuperHeros();
+            if(superHeros is null) { NotFound("No Result Found"); }
+            return Ok(superHeros);
         }
 
 
@@ -23,7 +28,7 @@ namespace CRUD_PostgreSQL.Controllers
         public async Task<ActionResult<SuperHero>> GetSuperHero(int id)
         {
 
-            var superHero = SuperHeros.Find(x => x.Id == id);
+            var superHero = _SuperHeroService.GetSuperHero(id);
             if (superHero == null)
             {
                 return NotFound("Resource not found");
@@ -34,25 +39,30 @@ namespace CRUD_PostgreSQL.Controllers
         [HttpPost]
         public async Task<ActionResult<List<SuperHero>>> AddSuperHero(SuperHero superHero)
         {
-            SuperHeros.Add(superHero);
-            return Ok(SuperHeros);
+            var superHeroService = _SuperHeroService.AddSuperHero(superHero);
+            return Ok(superHeroService);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<SuperHero>> UpdateSuperHero(int id,SuperHero superHero)
         {
-            var _superHero = SuperHeros.Find(x => x.Id == id);
-            SuperHeros.Remove(_superHero);
-            SuperHeros.Add(superHero);
-            return Ok(SuperHeros);
+            var superHeros = _SuperHeroService.UpdateSuperHero(id, superHero);
+            if (superHeros == null)
+            {
+                return NotFound("Resource not found");
+            }
+            return Ok(superHeros);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<SuperHero>>> DeleteSuper (int id)
+        public async Task<ActionResult<List<SuperHero>>> DeleteSuperHero (int id)
         {
-            var superHero = SuperHeros.Find(x => x.Id == id);
-            SuperHeros.Remove(superHero);
-            return Ok(SuperHeros);
+            var superHeros = _SuperHeroService.DeleteSuper(id);
+            if(superHeros is null)
+            {
+                return NotFound("Resource not found");
+            }
+            return Ok(superHeros);
         }
 
     }
